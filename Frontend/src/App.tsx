@@ -3,7 +3,10 @@ import {
   SecurityFinding, 
   ScanRecord, 
   ProjectRepo, 
-  SecurityActivity 
+  SecurityActivity,
+  UserProfile,
+  WorkspaceOrg,
+  NavTab
 } from './types/security';
 import { 
   INITIAL_FINDINGS, 
@@ -11,7 +14,7 @@ import {
   MOCK_SCANS, 
   MOCK_ACTIVITIES 
 } from './data/mockSecurityData';
-import { AppSidebar, NavTab } from './components/navigation/AppSidebar';
+import { AppSidebar } from './components/navigation/AppSidebar';
 import { TopNavigation } from './components/navigation/TopNavigation';
 import { OverviewDashboard } from './components/overview/OverviewDashboard';
 import { SecurityFindingsView } from './components/findings/SecurityFindingsView';
@@ -19,12 +22,36 @@ import { ScanHistoryView } from './components/history/ScanHistoryView';
 import { IntegrationsView } from './components/integrations/IntegrationsView';
 import { PoliciesSettingsView } from './components/policies/PoliciesSettingsView';
 import { ProjectsView } from './components/projects/ProjectsView';
+import { ExternalAnalysisView } from './components/external/ExternalAnalysisView';
+import { SecurityInsightsView } from './components/insights/SecurityInsightsView';
+import { OrganizationView } from './components/organization/OrganizationView';
 import { RepositoryScanningModal } from './components/scanner/RepositoryScanningModal';
 import { AIRemediationModal } from './components/remediation/AIRemediationModal';
 import { KeyboardShortcutsModal } from './components/common/KeyboardShortcutsModal';
+import { AuthModal } from './components/auth/AuthModal';
 import { ToastNotification, ToastMessage } from './components/common/ToastNotification';
 
 export const App: React.FC = () => {
+  // Mode & Auth
+  const [appMode] = useState<'demo' | 'development' | 'production'>(
+    (import.meta.env.VITE_APP_MODE as any) || 'development'
+  );
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>({
+    id: 'usr-default-01',
+    email: 'alex@acme.dev',
+    full_name: 'Alex Developer',
+    is_active: true,
+    is_verified: true,
+    created_at: '2026-11-01T00:00:00Z'
+  });
+  const [currentOrg, setCurrentOrg] = useState<WorkspaceOrg>({
+    id: 'org-default-01',
+    name: 'Acme Production Core',
+    slug: 'acme-core',
+    role: 'OWNER'
+  });
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   // Navigation
   const [currentTab, setCurrentTab] = useState<NavTab>('overview');
   const [projects, setProjects] = useState<ProjectRepo[]>(MOCK_PROJECTS);
@@ -73,6 +100,50 @@ export const App: React.FC = () => {
     };
     window.addEventListener('keydown', handleGlobalKeys);
     return () => window.removeEventListener('keydown', handleGlobalKeys);
+  }, []);
+
+  // Real-time repository synchronization on startup
+  useEffect(() => {
+    const syncRealtimeFindings = async () => {
+      try {
+        const res = await fetch('/api/scan/local', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target_path: '.' })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.findings && data.findings.length > 0) {
+            setFindings(data.findings);
+            setSelectedFinding(data.findings[0]);
+            
+            const crits = data.findings.filter((f: SecurityFinding) => f.severity === 'CRITICAL' && f.status === 'OPEN').length;
+            const highs = data.findings.filter((f: SecurityFinding) => f.severity === 'HIGH' && f.status === 'OPEN').length;
+            const newStatus = (crits > 0 || highs > 0) ? 'BLOCKED' : 'SAFE';
+
+            setCurrentProject(prev => ({
+              ...prev,
+              status: newStatus,
+              totalFindings: data.findings.length,
+              criticalCount: crits,
+              highCount: highs,
+              lastScanned: 'Just now'
+            }));
+            setProjects(prev => prev.map((p, idx) => idx === 0 ? {
+              ...p,
+              status: newStatus,
+              totalFindings: data.findings.length,
+              criticalCount: crits,
+              highCount: highs,
+              lastScanned: 'Just now'
+            } : p));
+          }
+        }
+      } catch {
+        // Retain initial fallback dataset if backend unavailable
+      }
+    };
+    syncRealtimeFindings();
   }, []);
 
   // Handlers
@@ -200,6 +271,14 @@ export const App: React.FC = () => {
         openFindingsCount={openFindingsCount}
         currentProject={currentProject}
         onOpenShortcuts={() => setIsShortcutsModalOpen(true)}
+        currentUser={currentUser}
+        currentOrg={currentOrg}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onLogout={() => {
+          setCurrentUser(null);
+          showToast("Signed Out", "You have been safely signed out.", "info");
+        }}
+        appMode={appMode}
       />
 
       {/* Main View Area */}
@@ -267,10 +346,41 @@ export const App: React.FC = () => {
           {currentTab === 'policies' && (
             <PoliciesSettingsView onShowToast={showToast} />
           )}
+
+          {currentTab === 'external' && (
+            <ExternalAnalysisView
+              onScanComplete={handleScanComplete}
+              onNavigateToFindings={() => setCurrentTab('findings')}
+              onShowToast={showToast}
+            />
+          )}
+
+          {currentTab === 'insights' && (
+            <SecurityInsightsView onShowToast={showToast} />
+          )}
+
+          {currentTab === 'organization' && (
+            <OrganizationView
+              currentOrg={currentOrg}
+              currentUser={currentUser}
+              onShowToast={showToast}
+            />
+          )}
         </main>
       </div>
 
       {/* Modals & Dialogs */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={(user, org) => {
+          setCurrentUser(user);
+          if (org) setCurrentOrg(org);
+          setIsAuthModalOpen(false);
+          showToast("Authentication Successful", `Welcome back, ${user.full_name || user.email}!`, "success");
+        }}
+        onShowToast={showToast}
+      />
       <RepositoryScanningModal
         isOpen={isScanModalOpen}
         onClose={() => setIsScanModalOpen(false)}

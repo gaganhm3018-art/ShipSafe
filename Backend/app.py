@@ -14,12 +14,67 @@ import time
 import os
 
 from Scanner.engine import SecurityScannerEngine, ALL_EXTS
+from database.connection import init_db, SessionLocal
+from database.models import Scan, Finding
+from auth.routes import router as auth_router
+from organizations.routes import router as org_router
+from repositories.routes import router as repo_router
+from website_scanner.routes import router as website_router
+from analytics.routes import router as analytics_router
 
 app = FastAPI(
     title="ShipSafe Security Engine API",
     description="Deterministic vulnerability detection and AI-assisted remediation",
-    version="1.0.0"
+    version="2.4.0"
 )
+
+@app.on_event("startup")
+def on_startup():
+    try:
+        init_db()
+        db = SessionLocal()
+        try:
+            from database.models import User, Organization, OrganizationMember, OrgRole
+            from auth.security import hash_password
+            existing = db.query(User).filter(User.email == "alex@acme.dev").first()
+            if not existing:
+                default_user = User(
+                    email="alex@acme.dev",
+                    hashed_password=hash_password("DevPassword123!"),
+                    full_name="Alex Developer",
+                    is_active=True,
+                    is_verified=True
+                )
+                db.add(default_user)
+                db.flush()
+
+                default_org = Organization(
+                    name="Acme Production Core",
+                    slug="acme-core",
+                    is_personal=False,
+                    owner_id=default_user.id
+                )
+                db.add(default_org)
+                db.flush()
+
+                membership = OrganizationMember(
+                    organization_id=default_org.id,
+                    user_id=default_user.id,
+                    role=OrgRole.OWNER
+                )
+                db.add(membership)
+                db.commit()
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"Warning: database init error: {e}")
+
+app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
+app.include_router(org_router, prefix="/api/organizations", tags=["Organizations"])
+app.include_router(repo_router, prefix="/api/repositories", tags=["Repositories"])
+app.include_router(website_router, prefix="/api/website", tags=["Website Scanner"])
+app.include_router(analytics_router, prefix="/api/analytics", tags=["Analytics"])
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -159,6 +214,66 @@ def health_check():
 def get_scans():
     return {"scans": SCANS_DB}
 
+@app.get("/api/scans/{scan_id}")
+def get_scan_by_id(scan_id: str):
+    db = SessionLocal()
+    try:
+        scan = db.query(Scan).filter(Scan.id == scan_id).first()
+        if scan:
+            occurrences = scan.occurrences
+            findings_data = []
+            for occ in occurrences:
+                f = occ.finding
+                snippet_obj = json.loads(occ.snippet_json) if occ.snippet_json else {}
+                findings_data.append({
+                    "id": f.id,
+                    "ruleId": f.rule_id,
+                    "name": f.name,
+                    "type": f.type,
+                    "severity": f.severity.value,
+                    "file": f.file_path,
+                    "line": f.line_number,
+                    "cwe": f.cwe,
+                    "cweName": f.cwe_name,
+                    "cvss": f.cvss,
+                    "description": f.description,
+                    "whyDangerous": f.why_dangerous,
+                    "impact": f.impact,
+                    "remediation": f.remediation,
+                    "evidence": occ.evidence,
+                    "status": f.status.value,
+                    "detectedAt": f.first_seen_at.isoformat(),
+                    "language": f.language,
+                    "snippet": snippet_obj
+                })
+            return {
+                "id": scan.id,
+                "scanId": scan.id,
+                "repository": scan.target_name,
+                "branch": scan.target_branch,
+                "commit": scan.commit_hash or "latest",
+                "timestamp": scan.created_at.isoformat(),
+                "status": scan.status.value,
+                "totalFindings": scan.total_findings,
+                "critical": scan.critical_count,
+                "high": scan.high_count,
+                "medium": scan.medium_count,
+                "low": scan.low_count,
+                "policyViolation": scan.policy_violation,
+                "trigger": scan.trigger,
+                "durationMs": scan.duration_ms,
+                "filesScanned": scan.files_scanned,
+                "findings": findings_data
+            }
+    finally:
+        db.close()
+
+    for s in SCANS_DB:
+        if s.get("id") == scan_id:
+            return s
+    raise HTTPException(status_code=404, detail="Scan not found")
+
+
 @app.post("/api/scan/local")
 def scan_workspace(req: ScanPathRequest):
     start_time = time.time()
@@ -170,6 +285,11 @@ def scan_workspace(req: ScanPathRequest):
     all_findings = []
     files_scanned = 0
     excluded = set(req.excluded_dirs or [])
+    DEFAULT_EXCLUDES = {
+        "node_modules", ".git", "venv", ".venv", "__pycache__",
+        "dist", "build", ".pytest_cache", ".idea", ".vscode"
+    }
+    excluded.update(DEFAULT_EXCLUDES)
 
     for dirpath, dirnames, filenames in os.walk(root):
         # Exclude directories

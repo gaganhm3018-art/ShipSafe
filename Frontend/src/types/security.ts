@@ -15,6 +15,35 @@ export type FindingStatus = 'OPEN' | 'IN_REVIEW' | 'REMEDIATED' | 'IGNORED';
 
 export type ProgrammingLanguage = 'python' | 'javascript' | 'typescript' | 'manifest' | 'config';
 
+export type NavTab = 
+  | 'overview' 
+  | 'projects' 
+  | 'findings' 
+  | 'external' 
+  | 'insights' 
+  | 'history' 
+  | 'integrations' 
+  | 'policies' 
+  | 'organization';
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  is_active: boolean;
+  is_verified: boolean;
+  avatar_url?: string;
+  role?: 'OWNER' | 'ADMIN' | 'DEVELOPER' | 'VIEWER';
+  created_at?: string;
+}
+
+export interface WorkspaceOrg {
+  id: string;
+  name: string;
+  slug: string;
+  role: 'OWNER' | 'ADMIN' | 'DEVELOPER' | 'VIEWER';
+}
+
 export interface CodeLine {
   line: number;
   code: string;
