@@ -22,13 +22,10 @@ import { ScanHistoryView } from './components/history/ScanHistoryView';
 import { IntegrationsView } from './components/integrations/IntegrationsView';
 import { PoliciesSettingsView } from './components/policies/PoliciesSettingsView';
 import { ProjectsView } from './components/projects/ProjectsView';
-<<<<<<< HEAD
 import { CVEIntelligenceView } from './components/vulnerabilities/CVEIntelligenceView';
-=======
 import { ExternalAnalysisView } from './components/external/ExternalAnalysisView';
 import { SecurityInsightsView } from './components/insights/SecurityInsightsView';
 import { OrganizationView } from './components/organization/OrganizationView';
->>>>>>> 801345b7d87b136424a2bbf77bff875d5f0b1245
 import { RepositoryScanningModal } from './components/scanner/RepositoryScanningModal';
 import { AIRemediationModal } from './components/remediation/AIRemediationModal';
 import { KeyboardShortcutsModal } from './components/common/KeyboardShortcutsModal';

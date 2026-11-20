@@ -19,6 +19,7 @@ export type NavTab =
   | 'overview' 
   | 'projects' 
   | 'findings' 
+  | 'cve'
   | 'external' 
   | 'insights' 
   | 'history' 

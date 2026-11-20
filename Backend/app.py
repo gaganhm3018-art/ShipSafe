@@ -14,9 +14,7 @@ import time
 import os
 
 from Scanner.engine import SecurityScannerEngine, ALL_EXTS
-<<<<<<< HEAD
 from Scanner.cve import CVEService
-=======
 from database.connection import init_db, SessionLocal
 from database.models import Scan, Finding
 from auth.routes import router as auth_router
@@ -24,7 +22,6 @@ from organizations.routes import router as org_router
 from repositories.routes import router as repo_router
 from website_scanner.routes import router as website_router
 from analytics.routes import router as analytics_router
->>>>>>> 801345b7d87b136424a2bbf77bff875d5f0b1245
 
 app = FastAPI(
     title="ShipSafe Security Engine API",

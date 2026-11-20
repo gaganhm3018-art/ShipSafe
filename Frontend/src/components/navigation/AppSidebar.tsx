@@ -8,28 +8,19 @@ import {
   Cpu, 
   Sliders, 
   Terminal, 
-<<<<<<< HEAD
-  ChevronDown,
-  Keyboard,
-  ExternalLink,
-  AlertOctagon
-=======
   ChevronDown, 
   Keyboard, 
   Globe,
   TrendingUp,
   Building2,
   LogOut,
-  UserCheck
->>>>>>> 801345b7d87b136424a2bbf77bff875d5f0b1245
+  UserCheck,
+  AlertOctagon,
+  ExternalLink
 } from 'lucide-react';
 import { ProjectRepo, NavTab, UserProfile, WorkspaceOrg } from '../../types/security';
 
-<<<<<<< HEAD
-export type NavTab = 'overview' | 'projects' | 'findings' | 'cve' | 'history' | 'integrations' | 'policies';
-=======
 export type { NavTab };
->>>>>>> 801345b7d87b136424a2bbf77bff875d5f0b1245
 
 interface AppSidebarProps {
   currentTab: NavTab;
@@ -60,12 +51,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     { id: 'overview' as NavTab, label: 'Overview', icon: LayoutDashboard },
     { id: 'projects' as NavTab, label: 'Projects', icon: FolderGit2, count: 4 },
     { id: 'findings' as NavTab, label: 'Security Findings', icon: ShieldAlert, count: openFindingsCount, badgeColor: 'bg-severity-critical/20 text-severity-critical border-severity-critical/30' },
-<<<<<<< HEAD
     { id: 'cve' as NavTab, label: 'CVE Intelligence', icon: AlertOctagon },
-=======
     { id: 'external' as NavTab, label: 'External Analysis', icon: Globe },
     { id: 'insights' as NavTab, label: 'Security Insights', icon: TrendingUp },
->>>>>>> 801345b7d87b136424a2bbf77bff875d5f0b1245
     { id: 'history' as NavTab, label: 'Scan History', icon: History },
     { id: 'integrations' as NavTab, label: 'Integrations', icon: Cpu, subtext: 'CI/CD & CLI' },
     { id: 'policies' as NavTab, label: 'Policies & Settings', icon: Sliders },
