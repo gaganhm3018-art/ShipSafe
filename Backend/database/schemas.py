@@ -5,7 +5,7 @@ Validates request bodies, parameters, and structured JSON responses.
 
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
 # ==============================================================================
@@ -42,8 +42,7 @@ class UserProfileResponse(BaseModel):
     avatar_url: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -84,8 +83,7 @@ class OrganizationResponse(BaseModel):
     role: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MemberAddRequest(BaseModel):
@@ -126,8 +124,7 @@ class RepositoryResponse(BaseModel):
     open_findings: int = 0
     last_scanned: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ScanStatusResponse(BaseModel):

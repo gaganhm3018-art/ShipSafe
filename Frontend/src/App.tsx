@@ -29,6 +29,7 @@ import { RepositoryScanningModal } from './components/scanner/RepositoryScanning
 import { AIRemediationModal } from './components/remediation/AIRemediationModal';
 import { KeyboardShortcutsModal } from './components/common/KeyboardShortcutsModal';
 import { AuthModal } from './components/auth/AuthModal';
+import { AuthPage } from './components/auth/AuthPage';
 import { ToastNotification, ToastMessage } from './components/common/ToastNotification';
 
 export const App: React.FC = () => {
@@ -36,19 +37,31 @@ export const App: React.FC = () => {
   const [appMode] = useState<'demo' | 'development' | 'production'>(
     (import.meta.env.VITE_APP_MODE as any) || 'development'
   );
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>({
-    id: 'usr-default-01',
-    email: 'alex@acme.dev',
-    full_name: 'Alex Developer',
-    is_active: true,
-    is_verified: true,
-    created_at: '2026-11-01T00:00:00Z'
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
+    try {
+      const saved = localStorage.getItem('shipsafe_auth_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
-  const [currentOrg, setCurrentOrg] = useState<WorkspaceOrg>({
-    id: 'org-default-01',
-    name: 'Acme Production Core',
-    slug: 'acme-core',
-    role: 'OWNER'
+  const [currentOrg, setCurrentOrg] = useState<WorkspaceOrg>(() => {
+    try {
+      const saved = localStorage.getItem('shipsafe_auth_org');
+      return saved ? JSON.parse(saved) : {
+        id: 'org-core',
+        name: 'Acme Production Core',
+        slug: 'acme-core',
+        role: 'OWNER'
+      };
+    } catch {
+      return {
+        id: 'org-core',
+        name: 'Acme Production Core',
+        slug: 'acme-core',
+        role: 'OWNER'
+      };
+    }
   });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
@@ -260,7 +273,55 @@ export const App: React.FC = () => {
     showToast("Audit Complete", `Scan finished with ${newFindings.length} findings detected.`, newStatus === 'BLOCKED' ? 'error' : 'success');
   };
 
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('shipsafe_auth_user');
+      localStorage.removeItem('shipsafe_auth_org');
+      localStorage.removeItem('shipsafe_access_token');
+      fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    } catch {
+      // ignore
+    }
+    setCurrentUser(null);
+    showToast("Signed Out", "You have been safely signed out. Please sign in to resume.", "info");
+  };
+
   const openFindingsCount = findings.filter(f => f.status === 'OPEN').length;
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-bg-main text-text-primary antialiased">
+        <AuthPage
+          onAuthSuccess={(user, org) => {
+            setCurrentUser(user);
+            if (org) setCurrentOrg(org);
+          }}
+          onShowToast={showToast}
+          onExploreDemo={() => {
+            const demoUser: UserProfile = {
+              id: 'usr-demo-01',
+              email: 'alex@acme.dev',
+              full_name: 'Alex Developer (Demo)',
+              is_active: true,
+              is_verified: true,
+              role: 'OWNER',
+              created_at: new Date().toISOString()
+            };
+            const demoOrg: WorkspaceOrg = {
+              id: 'org-demo-01',
+              name: 'Acme Production Core',
+              slug: 'acme-core',
+              role: 'OWNER'
+            };
+            setCurrentUser(demoUser);
+            setCurrentOrg(demoOrg);
+            showToast("Demo Mode Active", "Exploring ShipSafe with demo telemetry", "info");
+          }}
+        />
+        <ToastNotification toasts={toasts} onDismiss={dismissToast} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-bg-main text-text-primary antialiased">
@@ -274,10 +335,7 @@ export const App: React.FC = () => {
         currentUser={currentUser}
         currentOrg={currentOrg}
         onOpenAuth={() => setIsAuthModalOpen(true)}
-        onLogout={() => {
-          setCurrentUser(null);
-          showToast("Signed Out", "You have been safely signed out.", "info");
-        }}
+        onLogout={handleLogout}
         appMode={appMode}
       />
 
@@ -291,6 +349,8 @@ export const App: React.FC = () => {
           onOpenScanModal={() => setIsScanModalOpen(true)}
           findings={findings}
           onShowToast={showToast}
+          currentUser={currentUser}
+          onLogout={handleLogout}
         />
 
         {/* Dynamic Route View */}

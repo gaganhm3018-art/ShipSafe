@@ -7,7 +7,7 @@ from alembic import context
 # Add backend directory to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from database.connection import Base, DATABASE_URL
+from database.connection import Base, DATABASE_URL, engine
 import database.models  # load models for autogenerate metadata
 
 config = context.config
@@ -18,7 +18,7 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 def get_url():
-    return os.environ.get("DATABASE_URL", DATABASE_URL)
+    return str(engine.url)
 
 def run_migrations_offline() -> None:
     url = get_url()
@@ -32,13 +32,7 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 def run_migrations_online() -> None:
-    configuration = config.get_section(config.config_ini_section) or {}
-    configuration["sqlalchemy.url"] = get_url()
-    connectable = engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    connectable = engine
     with connectable.connect() as connection:
         context.configure(
             connection=connection,

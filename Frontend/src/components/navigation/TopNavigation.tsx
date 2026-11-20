@@ -10,7 +10,7 @@ import {
   FolderGit2,
   Check
 } from 'lucide-react';
-import { ProjectRepo, SecurityFinding } from '../../types/security';
+import { ProjectRepo, SecurityFinding, UserProfile } from '../../types/security';
 import { ScannerService } from '../../services/scannerService';
 
 interface TopNavigationProps {
@@ -20,6 +20,8 @@ interface TopNavigationProps {
   onOpenScanModal: () => void;
   findings: SecurityFinding[];
   onShowToast: (title: string, message?: string, type?: 'success' | 'info' | 'error') => void;
+  currentUser?: UserProfile | null;
+  onLogout?: () => void;
 }
 
 export const TopNavigation: React.FC<TopNavigationProps> = ({
@@ -28,7 +30,9 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
   onSelectProject,
   onOpenScanModal,
   findings,
-  onShowToast
+  onShowToast,
+  currentUser,
+  onLogout
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -137,6 +141,26 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
           <Play className="w-3.5 h-3.5 fill-current" />
           <span>New Scan</span>
         </button>
+
+        {currentUser && (
+          <div className="flex items-center gap-2.5 pl-2.5 border-l border-border/80">
+            <div 
+              className="w-7 h-7 rounded bg-bg-elevated border border-border flex items-center justify-center font-mono text-[11px] font-semibold text-accent-secondary"
+              title={`${currentUser.full_name} (${currentUser.email})`}
+            >
+              {currentUser.full_name?.slice(0, 2).toUpperCase() || 'US'}
+            </div>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                title="Sign out to Entry Page"
+                className="text-text-muted hover:text-severity-critical p-1 rounded hover:bg-bg-elevated transition-colors text-xs font-mono"
+              >
+                Sign out
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );

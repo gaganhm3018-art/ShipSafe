@@ -14,13 +14,17 @@ from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
 logger = logging.getLogger("shipsafe.database")
 
+from pathlib import Path
+
+_DB_PATH = Path(__file__).resolve().parent.parent / "shipsafe_dev.db"
+
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
     "postgresql+psycopg://postgres:postgres@localhost:5432/shipsafe"
 )
 DEV_SQLITE_FALLBACK = os.environ.get(
     "DEV_SQLITE_FALLBACK",
-    "sqlite:///./shipsafe_dev.db"
+    f"sqlite:///{_DB_PATH.as_posix()}"
 )
 
 Base = declarative_base()
