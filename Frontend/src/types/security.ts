@@ -127,3 +127,62 @@ export interface SecurityPolicy {
   enableDependencyAudit: boolean;
   ignoredPaths: string[];
 }
+
+export interface CVEDependencyFinding {
+  id: string;
+  vulnerabilityId: string;
+  cveId?: string;
+  ghsaId?: string;
+  packageName: string;
+  installedVersion: string;
+  ecosystem: 'PyPI' | 'npm' | string;
+  manifestFile: string;
+  isDirect: boolean;
+  isExactVersion: boolean;
+  severity: Severity;
+  cvssScore?: number | null;
+  cvssVector?: string | null;
+  summary: string;
+  details: string;
+  affectedRange: string;
+  fixedVersion?: string | null;
+  references: Array<{ type: string; url: string }>;
+  status: 'VULNERABLE' | 'SAFE' | 'UNKNOWN';
+  detectedAt: string;
+}
+
+export interface CVEDependencyItem {
+  name: string;
+  version: string;
+  ecosystem: string;
+  manifestFile: string;
+  isDirect: boolean;
+  isExactVersion: boolean;
+  status: 'VULNERABLE' | 'SAFE' | 'UNKNOWN';
+  vulnerabilityCount: number;
+  highestSeverity?: Severity | null;
+}
+
+export interface CVEScanResponse {
+  scanId: string;
+  timestamp: string;
+  durationMs: number;
+  status: 'PASSED' | 'FAILED' | 'WARNING';
+  isCached: boolean;
+  cacheAgeSeconds?: number;
+  summary: {
+    totalDependencies: number;
+    vulnerableDependencies: number;
+    safeDependencies: number;
+    unknownDependencies: number;
+    totalVulnerabilities: number;
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+  dependencies: CVEDependencyItem[];
+  findings: CVEDependencyFinding[];
+  ecosystemsFound: string[];
+}
+

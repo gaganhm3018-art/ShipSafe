@@ -19,6 +19,7 @@ import { ScanHistoryView } from './components/history/ScanHistoryView';
 import { IntegrationsView } from './components/integrations/IntegrationsView';
 import { PoliciesSettingsView } from './components/policies/PoliciesSettingsView';
 import { ProjectsView } from './components/projects/ProjectsView';
+import { CVEIntelligenceView } from './components/vulnerabilities/CVEIntelligenceView';
 import { RepositoryScanningModal } from './components/scanner/RepositoryScanningModal';
 import { AIRemediationModal } from './components/remediation/AIRemediationModal';
 import { KeyboardShortcutsModal } from './components/common/KeyboardShortcutsModal';
@@ -241,6 +242,10 @@ export const App: React.FC = () => {
               onRescanFile={handleRescanFile}
               onShowToast={showToast}
             />
+          )}
+
+          {currentTab === 'cve' && (
+            <CVEIntelligenceView onShowToast={showToast} />
           )}
 
           {currentTab === 'projects' && (

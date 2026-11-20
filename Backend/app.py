@@ -14,6 +14,7 @@ import time
 import os
 
 from Scanner.engine import SecurityScannerEngine, ALL_EXTS
+from Scanner.cve import CVEService
 
 app = FastAPI(
     title="ShipSafe Security Engine API",
@@ -30,6 +31,7 @@ app.add_middleware(
 )
 
 scanner = SecurityScannerEngine()
+cve_service = CVEService()
 
 # In-memory scan database for session persistence
 SCANS_DB: List[Dict[str, Any]] = [
@@ -258,6 +260,48 @@ def get_remediation_details(finding_id: str, rule_id: Optional[str] = None):
         "whatChanged": info["whatChanged"],
         "patchTemplate": info.get("patchTemplate")
     }
+
+# ==============================================================================
+# REAL-TIME CVE INTELLIGENCE ENDPOINTS (OSV.DEV)
+# ==============================================================================
+
+class CVEScanRequest(BaseModel):
+    target_path: Optional[str] = "."
+    force_refresh: Optional[bool] = False
+
+@app.post("/api/cve/scan")
+async def scan_cve(req: Optional[CVEScanRequest] = None):
+    target = req.target_path if req and req.target_path else "."
+    force = req.force_refresh if req and req.force_refresh else False
+    try:
+        return await cve_service.scan_project(target, force_refresh=force)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"CVE scan error: {str(e)}")
+
+@app.get("/api/cve/findings")
+async def get_cve_findings():
+    cached = cve_service.get_cached_findings()
+    if not cached:
+        return await cve_service.scan_project(".", force_refresh=False)
+    return cached
+
+@app.get("/api/cve/{vulnerability_id}")
+async def get_cve_vulnerability_detail(vulnerability_id: str):
+    detail = cve_service.get_vulnerability_detail(vulnerability_id)
+    if not detail:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Vulnerability advisory '{vulnerability_id}' not found in current scan scope."
+        )
+    return detail
+
+@app.post("/api/cve/refresh")
+async def refresh_cve_intelligence(req: Optional[CVEScanRequest] = None):
+    target = req.target_path if req and req.target_path else "."
+    try:
+        return await cve_service.scan_project(target, force_refresh=True)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"CVE refresh error: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

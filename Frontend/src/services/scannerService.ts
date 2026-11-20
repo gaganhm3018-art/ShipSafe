@@ -68,6 +68,53 @@ export class ScannerService {
       // Fallback to deterministic curated findings
     }
 
+    // Enrich with Real-Time CVE Intelligence from OSV.dev
+    try {
+      const cveResponse = await fetch('/api/cve/findings');
+      if (cveResponse.ok) {
+        const cveData = await cveResponse.json();
+        if (cveData.findings && cveData.findings.length > 0) {
+          for (const cf of cveData.findings) {
+            const alreadyExists = totalFindingsAccumulated.some(f => 
+              f.id === cf.id || f.ruleId === cf.vulnerabilityId
+            );
+            if (!alreadyExists) {
+              totalFindingsAccumulated.push({
+                id: cf.id,
+                ruleId: cf.vulnerabilityId,
+                name: `Vulnerable Dependency: ${cf.packageName} (${cf.vulnerabilityId})`,
+                type: 'Vulnerable Dependency',
+                severity: cf.severity,
+                file: cf.manifestFile,
+                line: 1,
+                cwe: 'CWE-1395',
+                cweName: 'Dependency on Vulnerable Third-Party Component',
+                cvss: cf.cvssScore || undefined,
+                description: cf.summary,
+                whyDangerous: cf.details || `Known vulnerability ${cf.vulnerabilityId} in ${cf.packageName}`,
+                impact: `Known public vulnerability in ${cf.packageName} affects application security posture.`,
+                remediation: cf.fixedVersion 
+                  ? `Upgrade ${cf.packageName} to version >= ${cf.fixedVersion}`
+                  : `Review advisory ${cf.vulnerabilityId} for remediation steps.`,
+                evidence: `${cf.packageName}==${cf.installedVersion}`,
+                status: 'OPEN',
+                detectedAt: cf.detectedAt,
+                language: 'manifest',
+                snippet: {
+                  startLine: 1,
+                  endLine: 1,
+                  targetLine: 1,
+                  lines: [{ line: 1, code: `${cf.packageName}==${cf.installedVersion}`, isTarget: true }]
+                }
+              });
+            }
+          }
+        }
+      }
+    } catch {
+      // If OSV is unavailable, existing security scanning continues without crashing
+    }
+
     if (totalFindingsAccumulated.length === 0) {
       totalFindingsAccumulated = [...INITIAL_FINDINGS];
     }

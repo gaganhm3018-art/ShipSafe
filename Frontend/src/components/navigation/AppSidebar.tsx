@@ -10,11 +10,12 @@ import {
   Terminal, 
   ChevronDown,
   Keyboard,
-  ExternalLink
+  ExternalLink,
+  AlertOctagon
 } from 'lucide-react';
 import { ProjectRepo } from '../../types/security';
 
-export type NavTab = 'overview' | 'projects' | 'findings' | 'history' | 'integrations' | 'policies';
+export type NavTab = 'overview' | 'projects' | 'findings' | 'cve' | 'history' | 'integrations' | 'policies';
 
 interface AppSidebarProps {
   currentTab: NavTab;
@@ -35,6 +36,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     { id: 'overview' as NavTab, label: 'Overview', icon: LayoutDashboard },
     { id: 'projects' as NavTab, label: 'Projects', icon: FolderGit2, count: 4 },
     { id: 'findings' as NavTab, label: 'Security Findings', icon: ShieldAlert, count: openFindingsCount, badgeColor: 'bg-severity-critical/20 text-severity-critical border-severity-critical/30' },
+    { id: 'cve' as NavTab, label: 'CVE Intelligence', icon: AlertOctagon },
     { id: 'history' as NavTab, label: 'Scan History', icon: History },
     { id: 'integrations' as NavTab, label: 'Integrations', icon: Cpu, subtext: 'CI/CD & CLI' },
     { id: 'policies' as NavTab, label: 'Policies & Settings', icon: Sliders }

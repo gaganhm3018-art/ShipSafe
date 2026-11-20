@@ -7,7 +7,8 @@
     "build": "npm --prefix Frontend run build",
     "preview": "npm --prefix Frontend run preview",
     "start:backend": "python Backend/app.py",
-    "test:scan": "python Backend/test_scan.py"
+    "test:scan": "python Backend/test_scan.py",
+    "test:cve": "python Backend/test_cve.py"
   },
   "repository": {
     "type": "git",
