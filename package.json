@@ -1,24 +1,27 @@
 {
   "name": "shipsafe",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "ShipSafe — Developer-First Application Security Platform",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "npm --prefix Frontend run dev",
+    "build": "npm --prefix Frontend run build",
+    "preview": "npm --prefix Frontend run preview",
+    "start:backend": "python Backend/app.py",
+    "test:scan": "python Backend/test_scan.py"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gaganhm3018-art/ShipSafe.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/gaganhm3018-art/ShipSafe/issues"
-  },
-  "homepage": "https://github.com/gaganhm3018-art/ShipSafe#readme",
-  "dependencies": {
-    "express": "^5.3.0"
-  }
+  "keywords": [
+    "appsec",
+    "security-scanner",
+    "developer-tooling",
+    "vulnerability-detection",
+    "static-analysis",
+    "cwe",
+    "remediation"
+  ],
+  "author": "ShipSafe Security Team",
+  "license": "Apache-2.0"
 }
