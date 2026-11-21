@@ -1,0 +1,14 @@
+[
+  "Backend/tests/test_auth_gateway.py::test_auth_gateway_email_verification",
+  "Backend/tests/test_auth_gateway.py::test_auth_gateway_login_and_token_rotation",
+  "Backend/tests/test_auth_gateway.py::test_auth_gateway_password_reset_revokes_sessions",
+  "Backend/tests/test_auth_gateway.py::test_auth_gateway_rate_limiter",
+  "Backend/tests/test_auth_gateway.py::test_auth_gateway_registration_flow",
+  "Backend/tests/test_auth_gateway.py::test_password_strength_validator",
+  "Backend/tests/test_backend.py::test_analytics_calculations_and_recurrence",
+  "Backend/tests/test_backend.py::test_organization_rbac_and_isolation",
+  "Backend/tests/test_backend.py::test_repository_url_parsing_and_fingerprints",
+  "Backend/tests/test_backend.py::test_ssrf_protection_guards",
+  "Backend/tests/test_backend.py::test_user_authentication_and_token_refresh",
+  "Backend/tests/test_backend.py::test_user_registration_and_workspace_provisioning"
+]

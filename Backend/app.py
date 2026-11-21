@@ -51,9 +51,7 @@ def on_startup():
 
                 default_org = Organization(
                     name="Acme Production Core",
-                    slug="acme-core",
-                    is_personal=False,
-                    owner_id=default_user.id
+                    slug="acme-core"
                 )
                 db.add(default_org)
                 db.flush()
